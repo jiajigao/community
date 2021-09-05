@@ -5,6 +5,7 @@ import com.demo.community.mapper.QuestionMapper;
 import com.demo.community.mapper.UserMapper;
 import com.demo.community.model.Question;
 import com.demo.community.model.User;
+import com.demo.community.model.UserExample;
 import com.demo.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Controller
 public class publishController {
@@ -27,7 +29,7 @@ public class publishController {
     private QuestionService questionService;
 
     @GetMapping("/publish/{id}")
-    public String edit(@PathVariable(name = "id") Long id,
+    public String edit(@PathVariable(name = "id") Integer id,
                        Model model){
         QuestionDTO question = questionService.getById(id);
         model.addAttribute("title", question.getTitle());
@@ -48,7 +50,7 @@ public class publishController {
             @RequestParam("tag") String tag,
                     HttpServletRequest request,
             Model model,
-            @RequestParam(value = "id", required = false) Long id
+            @RequestParam(value = "id", required = false) Integer id
     ){
         model.addAttribute("title", title);
         model.addAttribute("description", description);
@@ -79,8 +81,11 @@ public class publishController {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals("token")){
                     String token = cookie.getValue();
-                    user = userMapper.findByToken(token);
-                    if (user != null){
+                    UserExample userExample = new UserExample();
+                    userExample.createCriteria().andTokenEqualTo(token);
+                    List<User> users = userMapper.selectByExample(userExample);
+                    if (users.size() != 0){
+                        user = users.get(0);
                         request.getSession().setAttribute("user",user);
                     }
                     break;
